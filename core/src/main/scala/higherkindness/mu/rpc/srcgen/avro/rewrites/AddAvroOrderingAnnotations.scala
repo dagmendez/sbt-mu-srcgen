@@ -53,27 +53,19 @@ class AddAvroOrderingAnnotations extends SyntacticRule("AddAvroOrderingAnnotatio
       case Defn.Object(
             _,
             Term.Name(objName),
-            Template(
-              _,
-              _,
-              _,
-              stats
-            )
+            t1: Template
           ) =>
-        val patches = stats.zipWithIndex.map {
+        val patches = t1.stats.zipWithIndex.map {
           case (
                 t @ Defn.Object(
                   mods,
                   _,
-                  Template(
-                    _,
-                    Init(Type.Name(parentName), _, _) :: Nil,
-                    _,
-                    _
-                  )
+                  t2: Template
                 ),
                 i
-              ) if mods.exists(_.is[Mod.Case]) && parentName == objName =>
+              )
+              if mods
+                .exists(_.is[Mod.Case]) && t2.inits.headOption.exists(_.name.value == objName) =>
             Patch.addLeft(t, s"@_root_.com.sksamuel.avro4s.AvroSortPriority($i) ")
           case _ =>
             Patch.empty
